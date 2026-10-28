@@ -28,5 +28,7 @@ int			parse_args(int argc, char **argv, t_sim *sim);
 
 // init.c
 int			init_mutexes(t_sim *sim);
+int	init_allocation(t_sim *sim);
+int	init_coders(t_sim *sim);
 
 #endif
