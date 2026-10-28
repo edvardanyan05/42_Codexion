@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 17:50:03 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/26 19:16:42 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/10/28 21:13:07 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ typedef struct s_sim
 	char			*scheduler;
 
 	long long		start_time;
-	bool			simulation_ended;
+	int				simulation_ended;
 	pthread_mutex_t	print_lock;
 	pthread_mutex_t	sim_lock;
 
