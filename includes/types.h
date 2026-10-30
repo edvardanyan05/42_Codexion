@@ -15,10 +15,12 @@
 
 # include <pthread.h>
 
+typedef struct s_coder	t_coder;
+
 typedef struct s_dongle
 {
 	int				dongle_id;
-	int				owend_id;
+	int				owner_id;
 	long long		cooldown_until;
 	pthread_mutex_t	lock;
 	pthread_cond_t	cond;

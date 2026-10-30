@@ -78,7 +78,7 @@ int	init_coders(t_sim *sim)
 	while (i < sim->number_of_coders)
 	{
 		sim->dongles[i].dongle_id = i + 1;
-		sim->dongles[i].owend_id = 0;
+		sim->dongles[i].owner_id = 0;
 		sim->dongles[i].cooldown_until = 0;
 		if (pthread_mutex_init(&sim->dongles[i].lock, NULL) != 0)
 			return (destroy_coders(sim, i), 1);

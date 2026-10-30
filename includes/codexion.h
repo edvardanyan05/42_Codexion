@@ -44,4 +44,7 @@ void		take_both_dongles(t_coder *coder);
 void		free_dongle(t_sim *sim, t_dongle *dongle);
 void		free_both_dongles(t_coder *coder);
 
+// simulation.c
+void		*coder_routine(void *arg);
+
 #endif
