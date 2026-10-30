@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 22:31:36 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/31 01:55:42 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/10/31 03:39:19 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,5 +46,9 @@ void		free_both_dongles(t_coder *coder);
 
 // simulation.c
 void		*coder_routine(void *arg);
+int			is_simulation_ended(t_sim *sim);
+
+// monitor.c
+void		*monitor_routine(void *arg);
 
 #endif
