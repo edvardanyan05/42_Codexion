@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 22:31:36 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/30 21:02:07 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/10/30 21:50:22 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,10 @@
 // utils.c
 int			ft_strcmp(const char *s1, const char *s2);
 long long	ft_atoll(const char *str);
+
+// time.c
+long long	get_time_in_ms(void);
+void		ft_usleep(long long duration_ms);
 
 // parsing.c
 int			parse_args(int argc, char **argv, t_sim *sim);
