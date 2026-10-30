@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 22:31:36 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/28 22:33:03 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/10/30 21:02:07 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,8 +28,8 @@ int			parse_args(int argc, char **argv, t_sim *sim);
 
 // init.c
 int			init_mutexes(t_sim *sim);
-int	init_allocation(t_sim *sim);
-int	init_coders(t_sim *sim);
+int			init_allocation(t_sim *sim);
+int			init_coders(t_sim *sim);
 
 // logging.c
 void		print_status(t_sim *sim, int id, const char *status);

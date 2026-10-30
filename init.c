@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/10/28 21:34:45 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/28 23:10:38 by edmvarda         ###   ########.fr       */
+/*   Created: 2026/10/30 21:14:08 by edmvarda          #+#    #+#             */
+/*   Updated: 2026/10/30 21:24:24 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ int	init_allocation(t_sim *sim)
 		printf("Memory allocation for <<Coders>> failed!\n");
 		return (1);
 	}
-	sim->dongles = malloc(sizeof(pthread_mutex_t) * sim->number_of_coders);
+	sim->dongles = malloc(sizeof(t_dongle) * sim->number_of_coders);
 	if (!sim->dongles)
 	{
 		free(sim->coders);
@@ -48,14 +48,26 @@ int	init_allocation(t_sim *sim)
 
 static void	destroy_coders(t_sim *sim, int i)
 {
-	printf("Mutex <<dongles & coders.coder_lock>> initialization failed\n");
+	printf("Mutex or Cond initialization failed\n");
 	while (--i >= 0)
 	{
-		pthread_mutex_destroy(&sim->dongles[i]);
+		pthread_mutex_destroy(&sim->dongles[i].lock);
+		pthread_cond_destroy(&sim->dongles[i].cond);
 		pthread_mutex_destroy(&sim->coders[i].coder_lock);
 	}
 	free(sim->dongles);
 	free(sim->coders);
+}
+
+static void	init_coders_data(t_sim *sim, int i)
+{
+	sim->coders[i].coder_id = i + 1;
+	sim->coders[i].sim = sim;
+	sim->coders[i].compile_count = 0;
+	sim->coders[i].is_dead = 0;
+	sim->coders[i].last_compile_time = 0;
+	sim->coders[i].left = &sim->dongles[i];
+	sim->coders[i].right = &sim->dongles[(i + 1) % sim->number_of_coders];
 }
 
 int	init_coders(t_sim *sim)
@@ -65,20 +77,23 @@ int	init_coders(t_sim *sim)
 	i = 0;
 	while (i < sim->number_of_coders)
 	{
-		if (pthread_mutex_init(&sim->dongles[i], NULL) != 0)
+		sim->dongles[i].dongle_id = i + 1;
+		sim->dongles[i].owend_id = 0;
+		sim->dongles[i].cooldown_until = 0;
+		if (pthread_mutex_init(&sim->dongles[i].lock, NULL) != 0)
 			return (destroy_coders(sim, i), 1);
-		if (pthread_mutex_init(&sim->coders[i].coder_lock, NULL) != 0)
+		if (pthread_cond_init(&sim->dongles[i].cond, NULL) != 0)
 		{
-			pthread_mutex_destroy(&sim->dongles[i]);
+			pthread_mutex_destroy(&sim->dongles[i].lock);
 			return (destroy_coders(sim, i), 1);
 		}
-		sim->coders[i].id = i + 1;
-		sim->coders[i].sim = sim;
-		sim->coders[i].compilations_done = 0;
-		sim->coders[i].last_compil_time = 0;
-		sim->coders[i].left_dongle = &sim->dongles[i];
-		sim->coders[i].right_dongle = &sim->dongles[(i + 1)
-			% sim->number_of_coders];
+		if (pthread_mutex_init(&sim->coders[i].coder_lock, NULL) != 0)
+		{
+			pthread_mutex_destroy(&sim->dongles[i].lock);
+			pthread_cond_destroy(&sim->dongles[i].cond);
+			return (destroy_coders(sim, i), 1);
+		}
+		init_coders_data(sim, i);
 		i++;
 	}
 	return (0);
