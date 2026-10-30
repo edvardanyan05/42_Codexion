@@ -31,4 +31,7 @@ int			init_mutexes(t_sim *sim);
 int	init_allocation(t_sim *sim);
 int	init_coders(t_sim *sim);
 
+// logging.c
+void		print_status(t_sim *sim, int id, const char *status);
+
 #endif
