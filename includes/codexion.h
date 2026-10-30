@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 22:31:36 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/30 21:50:22 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/10/31 01:55:42 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,8 @@ void		print_status(t_sim *sim, int id, const char *status);
 
 // dongle.c
 void		take_dongle(t_coder *coder, t_dongle *dongle);
+void		take_both_dongles(t_coder *coder);
 void		free_dongle(t_sim *sim, t_dongle *dongle);
+void		free_both_dongles(t_coder *coder);
 
 #endif
