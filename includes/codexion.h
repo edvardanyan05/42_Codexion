@@ -38,4 +38,8 @@ int			init_coders(t_sim *sim);
 // logging.c
 void		print_status(t_sim *sim, int id, const char *status);
 
+// dongle.c
+void		take_dongle(t_coder *coder, t_dongle *dongle);
+void		free_dongle(t_sim *sim, t_dongle *dongle);
+
 #endif
