@@ -14,6 +14,16 @@
 
 static void	compile(t_coder *coder);
 
+int	is_simulation_ended(t_sim *sim)
+{
+	int	ended;
+
+	pthread_mutex_lock(&sim->sim_lock);
+	ended = sim->simulation_ended;
+	pthread_mutex_unlock(&sim->sim_lock);
+	return (ended);
+}
+
 void	*coder_routine(void *arg)
 {
 	t_coder	*coder;
@@ -38,16 +48,6 @@ void	*coder_routine(void *arg)
 		ft_usleep(coder->sim->time_to_refactor);
 	}
 	return (NULL);
-}
-
-int	is_simulation_ended(t_sim *sim)
-{
-	int	ended;
-
-	pthread_mutex_lock(&sim->sim_lock);
-	ended = sim->simulation_ended;
-	pthread_mutex_unlock(&sim->sim_lock);
-	return (ended);
 }
 
 static void	compile(t_coder *coder)
