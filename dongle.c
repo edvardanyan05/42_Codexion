@@ -6,26 +6,50 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/30 21:40:09 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/31 02:02:39 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/03 21:41:19 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-void	take_dongle(t_coder *coder, t_dongle *dongle)
+int	take_dongle(t_coder *coder, t_dongle *dongle)
 {
 	pthread_mutex_lock(&dongle->lock);
-	while (dongle->owner_id != 0 || get_time_in_ms() < dongle->cooldown_until)
+	while (!is_simulation_ended(coder->sim) && (dongle->owner_id != 0
+			|| get_time_in_ms() < dongle->cooldown_until))
+	{
+		if (dongle->owner_id == 0 && get_time_in_ms() < dongle->cooldown_until)
+		{
+			pthread_mutex_unlock(&dongle->lock);
+			ft_usleep(1000);
+			pthread_mutex_lock(&dongle->lock);
+			continue ;
+		}
 		pthread_cond_wait(&dongle->cond, &dongle->lock);
+	}
+	if (is_simulation_ended(coder->sim))
+	{
+		pthread_mutex_unlock(&dongle->lock);
+		return (0);
+	}
 	dongle->owner_id = coder->coder_id;
 	print_status(coder->sim, coder->coder_id, "has taken a dongle");
 	pthread_mutex_unlock(&dongle->lock);
+	return (1);
 }
 
 void	take_both_dongles(t_coder *coder)
 {
-	take_dongle(coder, coder->left);
-	take_dongle(coder, coder->right);
+	if (coder->left->dongle_id < coder->right->dongle_id)
+	{
+		take_dongle(coder, coder->left);
+		take_dongle(coder, coder->right);
+	}
+	else
+	{
+		take_dongle(coder, coder->right);
+		take_dongle(coder, coder->left);
+	}
 }
 
 void	free_dongle(t_sim *sim, t_dongle *dongle)

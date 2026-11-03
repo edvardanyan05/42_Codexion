@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/30 21:14:08 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/30 21:24:24 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/03 21:05:39 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ static void	init_coders_data(t_sim *sim, int i)
 	sim->coders[i].sim = sim;
 	sim->coders[i].compile_count = 0;
 	sim->coders[i].is_dead = 0;
-	sim->coders[i].last_compile_time = 0;
+	sim->coders[i].last_compile_time = get_time_in_ms();
 	sim->coders[i].left = &sim->dongles[i];
 	sim->coders[i].right = &sim->dongles[(i + 1) % sim->number_of_coders];
 }
