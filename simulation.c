@@ -6,13 +6,14 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/31 01:10:33 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/31 03:23:08 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/03 22:05:11 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
 static void	compile(t_coder *coder);
+static void	print_debug_refactoring(t_coder *coder);
 
 int	is_simulation_ended(t_sim *sim)
 {
@@ -32,22 +33,33 @@ void	*coder_routine(void *arg)
 	if (coder->sim->number_of_coders == 1)
 	{
 		take_dongle(coder, coder->left);
-		ft_usleep(coder->sim->time_to_burnout);
-		return (NULL);
+		while (!is_simulation_ended(coder->sim))
+			ft_usleep(1000);
+		return (pthread_mutex_unlock(&coder->left->lock), NULL);
 	}
 	if (coder->coder_id % 2 == 0)
-		ft_usleep(1);
+		ft_usleep(1000);
 	while (!is_simulation_ended(coder->sim))
 	{
 		take_both_dongles(coder);
+		if (is_simulation_ended(coder->sim))
+		{
+			free_both_dongles(coder);
+			break ;
+		}
 		compile(coder);
 		free_both_dongles(coder);
-		print_status(coder->sim, coder->coder_id, "is debugging");
-		ft_usleep(coder->sim->time_to_debug);
-		print_status(coder->sim, coder->coder_id, "is refactoring");
-		ft_usleep(coder->sim->time_to_refactor);
+		print_debug_refactoring(coder);
 	}
 	return (NULL);
+}
+
+static void	print_debug_refactoring(t_coder *coder)
+{
+	print_status(coder->sim, coder->coder_id, "is debugging");
+	ft_usleep(coder->sim->time_to_debug);
+	print_status(coder->sim, coder->coder_id, "is refactoring");
+	ft_usleep(coder->sim->time_to_refactor);
 }
 
 static void	compile(t_coder *coder)
