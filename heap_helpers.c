@@ -6,20 +6,14 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 16:09:33 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/04 19:37:58 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 19:46:14 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "heap.h"
 
-int	compare_nodes_heap(t_heap_node *n1, t_heap_node *n2, char *scheduler)
-{
-	if (ft_strcmp(scheduler, "fifo") == 0)
-		return (n1->arrival_time < n2->arrival_time);
-	else if (ft_strcmp(scheduler, "edf") == 0)
-		return (n1->deadline < n2->deadline);
-	return (0);
-}
+static int	compare_nodes_heap(t_heap_node *n1, t_heap_node *n2,
+				char *scheduler);
 
 int	enlarge_heap(t_heap *heap)
 {
@@ -83,4 +77,14 @@ void	pop_sort_heap(t_heap *heap)
 		heap->nodes[smallest] = tmp;
 		i = smallest;
 	}
+}
+
+static int	compare_nodes_heap(t_heap_node *n1, t_heap_node *n2,
+		char *scheduler)
+{
+	if (ft_strcmp(scheduler, "fifo") == 0)
+		return (n1->arrival_time < n2->arrival_time);
+	else if (ft_strcmp(scheduler, "edf") == 0)
+		return (n1->deadline < n2->deadline);
+	return (0);
 }

@@ -6,13 +6,12 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 14:41:12 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/04 19:32:31 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 19:46:03 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "heap.h"
 
-int		compare_nodes_heap(t_heap_node *n1, t_heap_node *n2, char *scheduler);
 int		enlarge_heap(t_heap *heap);
 void	push_sort_heap(t_heap *heap);
 void	pop_sort_heap(t_heap *heap);

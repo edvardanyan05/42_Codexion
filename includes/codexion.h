@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 22:31:36 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/31 03:39:19 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 19:58:09 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define CODEXION_H
 
 # include "types.h"
+# include "heap.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <sys/time.h>
@@ -39,7 +40,7 @@ int			init_coders(t_sim *sim);
 void		print_status(t_sim *sim, int id, const char *status);
 
 // dongle.c
-void		take_dongle(t_coder *coder, t_dongle *dongle);
+int			take_dongle(t_coder *coder, t_dongle *dongle);
 void		take_both_dongles(t_coder *coder);
 void		free_dongle(t_sim *sim, t_dongle *dongle);
 void		free_both_dongles(t_coder *coder);
