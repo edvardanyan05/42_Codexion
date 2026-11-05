@@ -6,11 +6,35 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 22:29:33 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/10/28 21:09:18 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 21:09:20 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
+
+static int	is_valid_scheduler(char *scheduler);
+static int	parse_optional(int argc, char **argv, t_sim *sim);
+
+int	parse_args(int argc, char **argv, t_sim *sim)
+{
+	if (argc < 8 || argc > 9)
+	{
+		printf("Error: Invalid number of arguments!");
+		return (1);
+	}
+	if (parse_times(argv, sim) || parse_optional(argc, argv, sim))
+		return (1);
+	if (!is_valid_scheduler(sim->scheduler))
+	{
+		printf("Error: Invalid scheduler! Use 'fifo' or 'edf'.");
+		return (1);
+	}
+	sim->simulation_ended = 0;
+	sim->start_time = 0;
+	sim->coders = NULL;
+	sim->dongles = NULL;
+	return (0);
+}
 
 static int	is_valid_number(char *s)
 {
@@ -72,26 +96,5 @@ static int	parse_optional(int argc, char **argv, t_sim *sim)
 		sim->number_of_compiles_required = -1;
 		sim->scheduler = argv[7];
 	}
-	return (0);
-}
-
-int	parse_args(int argc, char **argv, t_sim *sim)
-{
-	if (argc < 8 || argc > 9)
-	{
-		printf("Error: Invalid number of arguments!");
-		return (1);
-	}
-	if (parse_times(argv, sim) || parse_optional(argc, argv, sim))
-		return (1);
-	if (!is_valid_scheduler(sim->scheduler))
-	{
-		printf("Error: Invalid scheduler! Use 'fifo' or 'edf'.");
-		return (1);
-	}
-	sim->simulation_ended = 0;
-	sim->start_time = 0;
-	sim->coders = NULL;
-	sim->dongles = NULL;
 	return (0);
 }
