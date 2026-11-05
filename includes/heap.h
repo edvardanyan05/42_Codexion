@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 14:02:50 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/04 19:03:16 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 19:37:57 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,6 @@ typedef struct s_heap
 t_heap			*init_heap(int capacity, char *scheduler);
 void			free_heap(t_heap *heap);
 int				push_heap(t_heap *heap, t_heap_node node);
-int				pop_heap(t_heap *heap);
+t_coder			*pop_heap(t_heap *heap);
 
 #endif
