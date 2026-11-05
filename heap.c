@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 14:41:12 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 20:33:44 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 21:31:42 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,4 +75,18 @@ t_coder	*pop_heap(t_heap *heap)
 	heap->size--;
 	pop_sort_heap(heap);
 	return (res);
+}
+
+int	is_node_in_heap(t_heap *heap, t_heap_node node)
+{
+	int	i;
+
+	i = 0;
+	while (i < heap->size)
+	{
+		if (heap->nodes[i].coder == node.coder)
+			return (1);
+		i++;
+	}
+	return (0);
 }

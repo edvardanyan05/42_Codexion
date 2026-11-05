@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/30 21:40:09 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/03 21:41:19 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 21:52:44 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,10 +14,19 @@
 
 int	take_dongle(t_coder *coder, t_dongle *dongle)
 {
+	t_heap_node	node;
+
+	node.coder = coder;
+	node.arrival_time = get_time_in_ms();
+	node.deadline = coder->last_compile_time + coder->sim->time_to_burnout;
 	pthread_mutex_lock(&dongle->lock);
 	while (!is_simulation_ended(coder->sim) && (dongle->owner_id != 0
-			|| get_time_in_ms() < dongle->cooldown_until))
+			|| get_time_in_ms() < dongle->cooldown_until
+			|| (dongle->heap->size > 0
+				&& dongle->heap->nodes[0].coder != coder)))
 	{
+		if (!is_node_in_heap(dongle->heap, node))
+			push_heap(dongle->heap, node);
 		if (dongle->owner_id == 0 && get_time_in_ms() < dongle->cooldown_until)
 		{
 			pthread_mutex_unlock(&dongle->lock);
@@ -33,6 +42,7 @@ int	take_dongle(t_coder *coder, t_dongle *dongle)
 		return (0);
 	}
 	dongle->owner_id = coder->coder_id;
+	pop_heap(dongle->heap);
 	print_status(coder->sim, coder->coder_id, "has taken a dongle");
 	pthread_mutex_unlock(&dongle->lock);
 	return (1);

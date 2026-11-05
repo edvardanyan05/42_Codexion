@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 14:02:50 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 20:00:30 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 21:27:39 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,5 +34,6 @@ t_heap					*init_heap(int capacity, char *scheduler);
 void					free_heap(t_heap *heap);
 int						push_heap(t_heap *heap, t_heap_node node);
 t_coder					*pop_heap(t_heap *heap);
+int						is_node_in_heap(t_heap *heap, t_heap_node node);
 
 #endif
