@@ -12,6 +12,20 @@
 
 #include "codexion.h"
 
+static void	wait_for_dongle(t_coder *coder, t_dongle *dongle,
+		t_heap_node node)
+{
+	while (!is_simulation_ended(coder->sim) && (dongle->owner_id != 0
+			|| get_time_in_ms() < dongle->cooldown_until
+			|| (dongle->heap->size > 0
+				&& dongle->heap->nodes[0].coder != coder)))
+	{
+		if (!is_node_in_heap(dongle->heap, node))
+			push_heap(dongle->heap, node);
+		pthread_cond_wait(&dongle->cond, &dongle->lock);
+	}
+}
+
 int	take_dongle(t_coder *coder, t_dongle *dongle)
 {
 	t_heap_node	node;
@@ -20,22 +34,7 @@ int	take_dongle(t_coder *coder, t_dongle *dongle)
 	node.arrival_time = get_time_in_ms();
 	node.deadline = coder->last_compile_time + coder->sim->time_to_burnout;
 	pthread_mutex_lock(&dongle->lock);
-	while (!is_simulation_ended(coder->sim) && (dongle->owner_id != 0
-			|| get_time_in_ms() < dongle->cooldown_until
-			|| (dongle->heap->size > 0
-				&& dongle->heap->nodes[0].coder != coder)))
-	{
-		if (!is_node_in_heap(dongle->heap, node))
-			push_heap(dongle->heap, node);
-		if (dongle->owner_id == 0 && get_time_in_ms() < dongle->cooldown_until)
-		{
-			pthread_mutex_unlock(&dongle->lock);
-			ft_usleep(1000);
-			pthread_mutex_lock(&dongle->lock);
-			continue ;
-		}
-		pthread_cond_wait(&dongle->cond, &dongle->lock);
-	}
+	wait_for_dongle(coder, dongle, node);
 	if (is_simulation_ended(coder->sim))
 	{
 		pthread_mutex_unlock(&dongle->lock);
