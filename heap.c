@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 14:41:12 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 19:46:03 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 20:33:44 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,13 +22,13 @@ t_heap	*init_heap(int capacity, char *scheduler)
 
 	heap = malloc(sizeof(t_heap));
 	if (!heap)
-		return (NULL);
+		return (0);
 	heap->nodes = malloc(sizeof(t_heap_node) * capacity);
 	if (!heap->nodes)
 	{
 		free(heap);
-		heap = NULL;
-		return (NULL);
+		heap = 0;
+		return (0);
 	}
 	heap->capacity = capacity;
 	heap->scheduler = scheduler;
@@ -43,10 +43,10 @@ void	free_heap(t_heap *heap)
 	if (heap->nodes)
 	{
 		free(heap->nodes);
-		heap->nodes = NULL;
+		heap->nodes = 0;
 	}
 	free(heap);
-	heap = NULL;
+	heap = 0;
 }
 
 int	push_heap(t_heap *heap, t_heap_node node)
@@ -64,12 +64,12 @@ t_coder	*pop_heap(t_heap *heap)
 	t_coder	*res;
 
 	if (heap->size == 0)
-		return (NULL);
+		return (0);
 	res = heap->nodes[0].coder;
 	heap->nodes[0].coder = heap->nodes[heap->size - 1].coder;
 	heap->nodes[0].arrival_time = heap->nodes[heap->size - 1].arrival_time;
 	heap->nodes[0].deadline = heap->nodes[heap->size - 1].deadline;
-	heap->nodes[heap->size - 1].coder = NULL;
+	heap->nodes[heap->size - 1].coder = 0;
 	heap->nodes[heap->size - 1].arrival_time = -1;
 	heap->nodes[heap->size - 1].deadline = -1;
 	heap->size--;

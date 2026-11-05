@@ -6,27 +6,13 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/30 21:14:08 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/03 21:05:39 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 20:58:07 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-int	init_mutexes(t_sim *sim)
-{
-	if (pthread_mutex_init(&sim->print_lock, NULL) != 0)
-	{
-		printf("Mutex <<print_lock>> initialization failed\n");
-		return (1);
-	}
-	if (pthread_mutex_init(&sim->sim_lock, NULL) != 0)
-	{
-		pthread_mutex_destroy(&sim->print_lock);
-		printf("Mutex <<sim_lock>> initialization failed\n");
-		return (1);
-	}
-	return (0);
-}
+int			init_heap_for_dongles(t_sim *sim);
 
 int	init_allocation(t_sim *sim)
 {
@@ -41,6 +27,29 @@ int	init_allocation(t_sim *sim)
 	{
 		free(sim->coders);
 		printf("Memory allocation for <<Dongles>> failed!\n");
+		return (2);
+	}
+	if (!init_heap_for_dongles(sim))
+	{
+		printf("Memory allocation for <<Dongles' heaps>> failed!\n");
+		free(sim->coders);
+		free(sim->dongles);
+		return (3);
+	}
+	return (0);
+}
+
+int	init_mutexes(t_sim *sim)
+{
+	if (pthread_mutex_init(&sim->print_lock, NULL) != 0)
+	{
+		printf("Mutex <<print_lock>> initialization failed\n");
+		return (1);
+	}
+	if (pthread_mutex_init(&sim->sim_lock, NULL) != 0)
+	{
+		pthread_mutex_destroy(&sim->print_lock);
+		printf("Mutex <<sim_lock>> initialization failed\n");
 		return (1);
 	}
 	return (0);

@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/26 17:50:03 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 19:59:12 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/05 20:30:40 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ typedef struct s_dongle
 	long long			cooldown_until;
 	pthread_mutex_t		lock;
 	pthread_cond_t		cond;
+	t_heap				*heap;
 }						t_dongle;
 
 typedef struct s_sim
@@ -58,8 +59,6 @@ typedef struct s_coder
 	t_dongle			*left;
 	t_dongle			*right;
 	t_sim				*sim;
-	t_heap				*heap;
-
 }						t_coder;
 
 #endif
