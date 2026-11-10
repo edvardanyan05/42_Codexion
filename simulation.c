@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/31 01:10:33 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/03 22:05:11 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/10 22:19:38 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ void	*coder_routine(void *arg)
 		take_dongle(coder, coder->left);
 		while (!is_simulation_ended(coder->sim))
 			ft_usleep(1000);
-		return (pthread_mutex_unlock(&coder->left->lock), NULL);
+		return (NULL);
 	}
 	if (coder->coder_id % 2 == 0)
 		ft_usleep(1000);
