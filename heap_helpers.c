@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "heap.h"
+#include "codexion.h"
 
 static int	compare_nodes_heap(t_heap_node *n1, t_heap_node *n2,
 				char *scheduler);
@@ -64,7 +64,7 @@ void	pop_sort_heap(t_heap *heap)
 		left = 2 * i + 1;
 		right = 2 * i + 2;
 		smallest = i;
-		if (left < heap->size && compare_nodes_heap(&heap->nodes[left],
+		if (compare_nodes_heap(&heap->nodes[left],
 				&heap->nodes[smallest], heap->scheduler))
 			smallest = left;
 		if (right < heap->size && compare_nodes_heap(&heap->nodes[right],
@@ -79,12 +79,16 @@ void	pop_sort_heap(t_heap *heap)
 	}
 }
 
+/*
+** Returns 1 if n1 must be served before n2.
+** fifo: smallest ticket (arrival order) first.
+** edf : earliest deadline first, ties broken by ticket (arrival order).
+** Tickets are unique per dongle, so the order is always deterministic.
+*/
 static int	compare_nodes_heap(t_heap_node *n1, t_heap_node *n2,
 		char *scheduler)
 {
-	if (ft_strcmp(scheduler, "fifo") == 0)
-		return (n1->arrival_time < n2->arrival_time);
-	else if (ft_strcmp(scheduler, "edf") == 0)
+	if (ft_strcmp(scheduler, "edf") == 0 && n1->deadline != n2->deadline)
 		return (n1->deadline < n2->deadline);
-	return (0);
+	return (n1->ticket < n2->ticket);
 }

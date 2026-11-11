@@ -12,17 +12,29 @@
 
 #include "codexion.h"
 
-static void	wait_for_dongle(t_coder *coder, t_dongle *dongle,
-		t_heap_node node)
+/*
+** Called with dongle->lock held. The coder may take the dongle only when:
+** nobody owns it, it is first in the queue and its cooldown is over.
+** If only the cooldown is missing, we sleep until it expires
+** (timedwait), otherwise we sleep until someone broadcasts
+** (a release or the end of the simulation).
+*/
+static void	wait_for_dongle(t_coder *coder, t_dongle *dongle)
 {
-	while (!is_simulation_ended(coder->sim) && (dongle->owner_id != 0
-			|| get_time_in_ms() < dongle->cooldown_until
-			|| (dongle->heap->size > 0
-				&& dongle->heap->nodes[0].coder != coder)))
+	struct timespec	ts;
+
+	while (!is_simulation_ended(coder->sim)
+		&& (dongle->owner_id != 0
+			|| dongle->heap->nodes[0].coder != coder
+			|| get_time_in_ms() < dongle->cooldown_until))
 	{
-		if (!is_node_in_heap(dongle->heap, node))
-			push_heap(dongle->heap, node);
-		pthread_cond_wait(&dongle->cond, &dongle->lock);
+		if (dongle->owner_id == 0 && dongle->heap->nodes[0].coder == coder)
+		{
+			ms_to_timespec(dongle->cooldown_until, &ts);
+			pthread_cond_timedwait(&dongle->cond, &dongle->lock, &ts);
+		}
+		else
+			pthread_cond_wait(&dongle->cond, &dongle->lock);
 	}
 }
 
@@ -30,35 +42,54 @@ int	take_dongle(t_coder *coder, t_dongle *dongle)
 {
 	t_heap_node	node;
 
-	node.coder = coder;
-	node.arrival_time = get_time_in_ms();
-	node.deadline = coder->last_compile_time + coder->sim->time_to_burnout;
 	pthread_mutex_lock(&dongle->lock);
-	wait_for_dongle(coder, dongle, node);
+	node.coder = coder;
+	node.ticket = dongle->next_ticket;
+	dongle->next_ticket++;
+	node.deadline = coder->last_compile_time + coder->sim->time_to_burnout;
+	if (!push_heap(dongle->heap, node))
+	{
+		pthread_mutex_unlock(&dongle->lock);
+		return (0);
+	}
+	wait_for_dongle(coder, dongle);
 	if (is_simulation_ended(coder->sim))
 	{
 		pthread_mutex_unlock(&dongle->lock);
 		return (0);
 	}
-	dongle->owner_id = coder->coder_id;
 	pop_heap(dongle->heap);
+	dongle->owner_id = coder->coder_id;
 	print_status(coder->sim, coder->coder_id, "has taken a dongle");
 	pthread_mutex_unlock(&dongle->lock);
 	return (1);
 }
 
-void	take_both_dongles(t_coder *coder)
+/*
+** Dongles are always taken in increasing id order (resource hierarchy),
+** which breaks the circular wait condition and prevents deadlocks.
+** Returns 1 when both dongles are held, 0 otherwise (nothing is held).
+*/
+int	take_both_dongles(t_coder *coder)
 {
-	if (coder->left->dongle_id < coder->right->dongle_id)
+	t_dongle	*first;
+	t_dongle	*second;
+
+	first = coder->left;
+	second = coder->right;
+	if (first->dongle_id > second->dongle_id)
 	{
-		take_dongle(coder, coder->left);
-		take_dongle(coder, coder->right);
+		first = coder->right;
+		second = coder->left;
 	}
-	else
+	if (!take_dongle(coder, first))
+		return (0);
+	if (!take_dongle(coder, second))
 	{
-		take_dongle(coder, coder->right);
-		take_dongle(coder, coder->left);
+		free_dongle(coder->sim, first);
+		return (0);
 	}
+	return (1);
 }
 
 void	free_dongle(t_sim *sim, t_dongle *dongle)

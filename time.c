@@ -10,22 +10,39 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <sys/time.h>
-#include <unistd.h>
+#include "codexion.h"
 
 long long	get_time_in_ms(void)
 {
 	struct timeval	tv;
 
-	gettimeofday(&tv, 0);
+	gettimeofday(&tv, NULL);
 	return ((long long)tv.tv_sec * 1000 + (long long)tv.tv_usec / 1000);
 }
 
-void	ft_usleep(long long duration_ms)
+/*
+** Precise sleep in small steps. If sim is given, returns early as soon
+** as the simulation ends so threads can be joined quickly.
+*/
+void	ft_usleep(long long duration_ms, t_sim *sim)
 {
 	long long	start;
 
 	start = get_time_in_ms();
 	while ((get_time_in_ms() - start) < duration_ms)
+	{
+		if (sim && is_simulation_ended(sim))
+			return ;
 		usleep(500);
+	}
+}
+
+/*
+** Converts an absolute time in ms (gettimeofday based, same clock as
+** pthread_cond_timedwait) into a struct timespec.
+*/
+void	ms_to_timespec(long long ms, struct timespec *ts)
+{
+	ts->tv_sec = ms / 1000;
+	ts->tv_nsec = (ms % 1000) * 1000000;
 }

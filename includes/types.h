@@ -23,6 +23,7 @@ typedef struct s_dongle
 	int					dongle_id;
 	int					owner_id;
 	long long			cooldown_until;
+	long long			next_ticket;
 	pthread_mutex_t		lock;
 	pthread_cond_t		cond;
 	t_heap				*heap;
@@ -41,6 +42,8 @@ typedef struct s_sim
 
 	long long			start_time;
 	int					simulation_ended;
+	int					locks_ready;
+	int					initialized;
 	pthread_mutex_t		print_lock;
 	pthread_mutex_t		sim_lock;
 
@@ -52,7 +55,6 @@ typedef struct s_coder
 {
 	int					coder_id;
 	int					compile_count;
-	int					is_dead;
 	long long			last_compile_time;
 	pthread_t			thread;
 	pthread_mutex_t		coder_lock;

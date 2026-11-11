@@ -46,3 +46,9 @@ long long	ft_atoll(const char *str)
 	}
 	return (result * sign);
 }
+
+int	print_error(const char *msg)
+{
+	fprintf(stderr, "%s\n", msg);
+	return (1);
+}

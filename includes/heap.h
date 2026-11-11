@@ -18,7 +18,7 @@ typedef struct s_coder	t_coder;
 typedef struct s_heap_node
 {
 	t_coder				*coder;
-	long long			arrival_time;
+	long long			ticket;
 	long long			deadline;
 }						t_heap_node;
 
@@ -30,10 +30,15 @@ typedef struct s_heap
 	int					size;
 }						t_heap;
 
+// heap.c
 t_heap					*init_heap(int capacity, char *scheduler);
 void					free_heap(t_heap *heap);
 int						push_heap(t_heap *heap, t_heap_node node);
 t_coder					*pop_heap(t_heap *heap);
-int						is_node_in_heap(t_heap *heap, t_heap_node node);
+
+// heap_helpers.c
+int						enlarge_heap(t_heap *heap);
+void					push_sort_heap(t_heap *heap);
+void					pop_sort_heap(t_heap *heap);
 
 #endif

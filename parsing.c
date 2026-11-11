@@ -12,89 +12,63 @@
 
 #include "codexion.h"
 
-static int	is_valid_scheduler(char *scheduler);
-static int	parse_optional(int argc, char **argv, t_sim *sim);
+static int	is_valid_number(char *s);
+static void	set_values(char **argv, t_sim *sim);
 
 int	parse_args(int argc, char **argv, t_sim *sim)
 {
-	if (argc < 8 || argc > 9)
+	int	i;
+
+	if (argc != 9)
+		return (print_error("Usage: ./codexion number_of_coders "
+				"time_to_burnout time_to_compile time_to_debug "
+				"time_to_refactor number_of_compiles_required "
+				"dongle_cooldown scheduler"));
+	i = 1;
+	while (i < 8)
 	{
-		printf("Error: Invalid number of arguments!");
-		return (1);
+		if (!is_valid_number(argv[i]))
+			return (print_error("Error: arguments must be integers "
+					"between 0 and 2147483647"));
+		i++;
 	}
-	if (parse_times(argv, sim) || parse_optional(argc, argv, sim))
-		return (1);
-	if (!is_valid_scheduler(sim->scheduler))
-	{
-		printf("Error: Invalid scheduler! Use 'fifo' or 'edf'.");
-		return (1);
-	}
-	sim->simulation_ended = 0;
-	sim->start_time = 0;
-	sim->coders = NULL;
-	sim->dongles = NULL;
+	if (ft_strcmp(argv[8], "fifo") != 0 && ft_strcmp(argv[8], "edf") != 0)
+		return (print_error("Error: scheduler must be 'fifo' or 'edf'"));
+	set_values(argv, sim);
+	if (sim->number_of_coders < 1)
+		return (print_error("Error: number_of_coders must be at least 1"));
 	return (0);
 }
 
+/*
+** Accepts only plain digits (no sign, no spaces) fitting in an int.
+*/
 static int	is_valid_number(char *s)
 {
 	int	i;
 
-	i = 0;
 	if (!s || !s[0])
 		return (0);
+	i = 0;
 	while (s[i])
 	{
 		if (s[i] < '0' || s[i] > '9')
 			return (0);
 		i++;
 	}
-	return (1);
+	if (i > 10)
+		return (0);
+	return (ft_atoll(s) <= INT_MAX);
 }
 
-static int	is_valid_scheduler(char *scheduler)
+static void	set_values(char **argv, t_sim *sim)
 {
-	if (!scheduler)
-		return (0);
-	if (ft_strcmp(scheduler, "fifo") != 0 && ft_strcmp(scheduler, "edf") != 0)
-		return (0);
-	return (1);
-}
-
-static int	parse_times(char **argv, t_sim *sim)
-{
-	if (!is_valid_number(argv[1]) || !is_valid_number(argv[2])
-		|| !is_valid_number(argv[3]) || !is_valid_number(argv[4])
-		|| !is_valid_number(argv[5]) || !is_valid_number(argv[6]))
-	{
-		printf("Error: Arguments must be positive integers!");
-		return (1);
-	}
 	sim->number_of_coders = (int)ft_atoll(argv[1]);
 	sim->time_to_burnout = ft_atoll(argv[2]);
 	sim->time_to_compile = ft_atoll(argv[3]);
 	sim->time_to_debug = ft_atoll(argv[4]);
 	sim->time_to_refactor = ft_atoll(argv[5]);
-	sim->dongle_cooldown = ft_atoll(argv[6]);
-	return (0);
-}
-
-static int	parse_optional(int argc, char **argv, t_sim *sim)
-{
-	if (argc == 9)
-	{
-		if (!is_valid_number(argv[7]))
-		{
-			printf("Error: Number of compiles must be an integer!");
-			return (1);
-		}
-		sim->number_of_compiles_required = (int)ft_atoll(argv[7]);
-		sim->scheduler = argv[8];
-	}
-	else
-	{
-		sim->number_of_compiles_required = -1;
-		sim->scheduler = argv[7];
-	}
-	return (0);
+	sim->number_of_compiles_required = (int)ft_atoll(argv[6]);
+	sim->dongle_cooldown = ft_atoll(argv[7]);
+	sim->scheduler = argv[8];
 }

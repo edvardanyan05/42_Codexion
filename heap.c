@@ -10,11 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "heap.h"
-
-int		enlarge_heap(t_heap *heap);
-void	push_sort_heap(t_heap *heap);
-void	pop_sort_heap(t_heap *heap);
+#include "codexion.h"
 
 t_heap	*init_heap(int capacity, char *scheduler)
 {
@@ -22,13 +18,12 @@ t_heap	*init_heap(int capacity, char *scheduler)
 
 	heap = malloc(sizeof(t_heap));
 	if (!heap)
-		return (0);
+		return (NULL);
 	heap->nodes = malloc(sizeof(t_heap_node) * capacity);
 	if (!heap->nodes)
 	{
 		free(heap);
-		heap = 0;
-		return (0);
+		return (NULL);
 	}
 	heap->capacity = capacity;
 	heap->scheduler = scheduler;
@@ -40,13 +35,8 @@ void	free_heap(t_heap *heap)
 {
 	if (!heap)
 		return ;
-	if (heap->nodes)
-	{
-		free(heap->nodes);
-		heap->nodes = 0;
-	}
+	free(heap->nodes);
 	free(heap);
-	heap = 0;
 }
 
 int	push_heap(t_heap *heap, t_heap_node node)
@@ -64,29 +54,10 @@ t_coder	*pop_heap(t_heap *heap)
 	t_coder	*res;
 
 	if (heap->size == 0)
-		return (0);
+		return (NULL);
 	res = heap->nodes[0].coder;
-	heap->nodes[0].coder = heap->nodes[heap->size - 1].coder;
-	heap->nodes[0].arrival_time = heap->nodes[heap->size - 1].arrival_time;
-	heap->nodes[0].deadline = heap->nodes[heap->size - 1].deadline;
-	heap->nodes[heap->size - 1].coder = 0;
-	heap->nodes[heap->size - 1].arrival_time = -1;
-	heap->nodes[heap->size - 1].deadline = -1;
+	heap->nodes[0] = heap->nodes[heap->size - 1];
 	heap->size--;
 	pop_sort_heap(heap);
 	return (res);
-}
-
-int	is_node_in_heap(t_heap *heap, t_heap_node node)
-{
-	int	i;
-
-	i = 0;
-	while (i < heap->size)
-	{
-		if (heap->nodes[i].coder == node.coder)
-			return (1);
-		i++;
-	}
-	return (0);
 }

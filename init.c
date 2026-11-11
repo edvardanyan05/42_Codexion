@@ -12,74 +12,78 @@
 
 #include "codexion.h"
 
-int		init_heap_for_dongles(t_sim *sim);
-void	destroy_coders(t_sim *sim, int i);
-void	init_coders_data(t_sim *sim, int i);
+static int	init_global_mutexes(t_sim *sim);
+static int	init_allocation(t_sim *sim);
+static int	init_heaps(t_sim *sim);
+static int	init_coders(t_sim *sim);
 
-int	init_allocation(t_sim *sim)
+/*
+** On any failure, cleanup_simulation() releases exactly what was created
+** (it relies on sim->locks_ready, sim->initialized and NULL pointers).
+*/
+int	init_simulation(t_sim *sim)
 {
-	sim->coders = malloc(sizeof(t_coder) * sim->number_of_coders);
-	if (!sim->coders)
+	if (init_global_mutexes(sim) || init_allocation(sim)
+		|| init_heaps(sim) || init_coders(sim))
 	{
-		printf("Memory allocation for <<Coders>> failed!\n");
+		cleanup_simulation(sim);
 		return (1);
-	}
-	sim->dongles = malloc(sizeof(t_dongle) * sim->number_of_coders);
-	if (!sim->dongles)
-	{
-		free(sim->coders);
-		printf("Memory allocation for <<Dongles>> failed!\n");
-		return (2);
-	}
-	if (!init_heap_for_dongles(sim))
-	{
-		printf("Memory allocation for <<Dongles' heaps>> failed!\n");
-		free(sim->coders);
-		free(sim->dongles);
-		return (3);
 	}
 	return (0);
 }
 
-int	init_mutexes(t_sim *sim)
+static int	init_global_mutexes(t_sim *sim)
 {
 	if (pthread_mutex_init(&sim->print_lock, NULL) != 0)
-	{
-		printf("Mutex <<print_lock>> initialization failed\n");
-		return (1);
-	}
+		return (print_error("Error: mutex initialization failed"));
 	if (pthread_mutex_init(&sim->sim_lock, NULL) != 0)
 	{
 		pthread_mutex_destroy(&sim->print_lock);
-		printf("Mutex <<sim_lock>> initialization failed\n");
-		return (1);
+		return (print_error("Error: mutex initialization failed"));
 	}
+	sim->locks_ready = 1;
 	return (0);
 }
 
-int	init_coders(t_sim *sim)
+static int	init_allocation(t_sim *sim)
+{
+	sim->dongles = malloc(sizeof(t_dongle) * sim->number_of_coders);
+	if (!sim->dongles)
+		return (print_error("Error: memory allocation failed"));
+	memset(sim->dongles, 0, sizeof(t_dongle) * sim->number_of_coders);
+	sim->coders = malloc(sizeof(t_coder) * sim->number_of_coders);
+	if (!sim->coders)
+		return (print_error("Error: memory allocation failed"));
+	memset(sim->coders, 0, sizeof(t_coder) * sim->number_of_coders);
+	return (0);
+}
+
+static int	init_heaps(t_sim *sim)
 {
 	int	i;
 
 	i = 0;
 	while (i < sim->number_of_coders)
 	{
-		sim->dongles[i].dongle_id = i + 1;
-		sim->dongles[i].owner_id = 0;
-		sim->dongles[i].cooldown_until = 0;
-		if (pthread_mutex_init(&sim->dongles[i].lock, NULL) != 0)
-			return (destroy_coders(sim, i), 1);
-		if (pthread_cond_init(&sim->dongles[i].cond, NULL) != 0)
-		{
-			pthread_mutex_destroy(&sim->dongles[i].lock);
-			return (destroy_coders(sim, i), 1);
-		}
-		if (pthread_mutex_init(&sim->coders[i].coder_lock, NULL) != 0)
-		{
-			pthread_mutex_destroy(&sim->dongles[i].lock);
-			pthread_cond_destroy(&sim->dongles[i].cond);
-			return (destroy_coders(sim, i), 1);
-		}
+		sim->dongles[i].heap = init_heap(sim->number_of_coders,
+				sim->scheduler);
+		if (!sim->dongles[i].heap)
+			return (print_error("Error: memory allocation failed"));
+		i++;
+	}
+	return (0);
+}
+
+static int	init_coders(t_sim *sim)
+{
+	int	i;
+
+	i = 0;
+	while (i < sim->number_of_coders)
+	{
+		if (init_index_sync(sim, i))
+			return (print_error("Error: mutex/cond initialization failed"));
+		sim->initialized = i + 1;
 		init_coders_data(sim, i);
 		i++;
 	}

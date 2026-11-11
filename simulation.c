@@ -13,7 +13,7 @@
 #include "codexion.h"
 
 static void	compile(t_coder *coder);
-static void	print_debug_refactoring(t_coder *coder);
+static void	debug_and_refactor(t_coder *coder);
 
 int	is_simulation_ended(t_sim *sim)
 {
@@ -25,6 +25,10 @@ int	is_simulation_ended(t_sim *sim)
 	return (ended);
 }
 
+/*
+** With a single coder there is only one dongle: it can be taken but
+** never paired, so the coder waits until the monitor detects burnout.
+*/
 void	*coder_routine(void *arg)
 {
 	t_coder	*coder;
@@ -34,32 +38,18 @@ void	*coder_routine(void *arg)
 	{
 		take_dongle(coder, coder->left);
 		while (!is_simulation_ended(coder->sim))
-			ft_usleep(1000);
+			usleep(500);
 		return (NULL);
 	}
-	if (coder->coder_id % 2 == 0)
-		ft_usleep(1000);
 	while (!is_simulation_ended(coder->sim))
 	{
-		take_both_dongles(coder);
-		if (is_simulation_ended(coder->sim))
-		{
-			free_both_dongles(coder);
+		if (!take_both_dongles(coder))
 			break ;
-		}
 		compile(coder);
 		free_both_dongles(coder);
-		print_debug_refactoring(coder);
+		debug_and_refactor(coder);
 	}
 	return (NULL);
-}
-
-static void	print_debug_refactoring(t_coder *coder)
-{
-	print_status(coder->sim, coder->coder_id, "is debugging");
-	ft_usleep(coder->sim->time_to_debug);
-	print_status(coder->sim, coder->coder_id, "is refactoring");
-	ft_usleep(coder->sim->time_to_refactor);
 }
 
 static void	compile(t_coder *coder)
@@ -69,5 +59,13 @@ static void	compile(t_coder *coder)
 	coder->compile_count++;
 	pthread_mutex_unlock(&coder->coder_lock);
 	print_status(coder->sim, coder->coder_id, "is compiling");
-	ft_usleep(coder->sim->time_to_compile);
+	ft_usleep(coder->sim->time_to_compile, coder->sim);
+}
+
+static void	debug_and_refactor(t_coder *coder)
+{
+	print_status(coder->sim, coder->coder_id, "is debugging");
+	ft_usleep(coder->sim->time_to_debug, coder->sim);
+	print_status(coder->sim, coder->coder_id, "is refactoring");
+	ft_usleep(coder->sim->time_to_refactor, coder->sim);
 }
