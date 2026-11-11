@@ -6,17 +6,12 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/05 20:56:38 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 21:05:45 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/11 18:42:15 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-/*
-** Initializes the dongle mutex, dongle cond and coder mutex of index i.
-** If one fails, the ones already created for this index are destroyed,
-** so index i is either fully initialized or not at all.
-*/
 int	init_index_sync(t_sim *sim, int i)
 {
 	if (pthread_mutex_init(&sim->dongles[i].lock, NULL) != 0)

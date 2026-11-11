@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/31 03:15:04 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/10 21:51:27 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/11 18:42:57 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,11 +33,6 @@ void	end_simulation(t_sim *sim)
 	pthread_mutex_unlock(&sim->sim_lock);
 }
 
-/*
-** Wakes every coder sleeping on a dongle condition variable so that it
-** sees simulation_ended and leaves. Taking the dongle lock before the
-** broadcast guarantees no coder is between its check and its wait.
-*/
 void	wake_all_dongles(t_sim *sim)
 {
 	int	i;

@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/11 18:00:00 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/11 18:00:00 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/11 18:40:57 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,10 +31,6 @@ int	main(int argc, char **argv)
 	return (status);
 }
 
-/*
-** Every coder starts with last_compile_time = start_time, so burnout
-** deadlines are measured from the beginning of the simulation.
-*/
 static int	run_simulation(t_sim *sim)
 {
 	pthread_t	monitor;

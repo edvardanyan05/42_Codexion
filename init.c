@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/30 21:14:08 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 21:05:43 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/11 18:42:26 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,14 +17,10 @@ static int	init_allocation(t_sim *sim);
 static int	init_heaps(t_sim *sim);
 static int	init_coders(t_sim *sim);
 
-/*
-** On any failure, cleanup_simulation() releases exactly what was created
-** (it relies on sim->locks_ready, sim->initialized and NULL pointers).
-*/
 int	init_simulation(t_sim *sim)
 {
-	if (init_global_mutexes(sim) || init_allocation(sim)
-		|| init_heaps(sim) || init_coders(sim))
+	if (init_global_mutexes(sim) || init_allocation(sim) || init_heaps(sim)
+		|| init_coders(sim))
 	{
 		cleanup_simulation(sim);
 		return (1);
@@ -65,8 +61,7 @@ static int	init_heaps(t_sim *sim)
 	i = 0;
 	while (i < sim->number_of_coders)
 	{
-		sim->dongles[i].heap = init_heap(sim->number_of_coders,
-				sim->scheduler);
+		sim->dongles[i].heap = init_heap(sim->number_of_coders, sim->scheduler);
 		if (!sim->dongles[i].heap)
 			return (print_error("Error: memory allocation failed"));
 		i++;

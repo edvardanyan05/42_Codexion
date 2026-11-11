@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/04 16:09:33 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 19:46:14 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/11 18:42:03 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,8 +64,8 @@ void	pop_sort_heap(t_heap *heap)
 		left = 2 * i + 1;
 		right = 2 * i + 2;
 		smallest = i;
-		if (compare_nodes_heap(&heap->nodes[left],
-				&heap->nodes[smallest], heap->scheduler))
+		if (compare_nodes_heap(&heap->nodes[left], &heap->nodes[smallest],
+				heap->scheduler))
 			smallest = left;
 		if (right < heap->size && compare_nodes_heap(&heap->nodes[right],
 				&heap->nodes[smallest], heap->scheduler))
@@ -79,12 +79,6 @@ void	pop_sort_heap(t_heap *heap)
 	}
 }
 
-/*
-** Returns 1 if n1 must be served before n2.
-** fifo: smallest ticket (arrival order) first.
-** edf : earliest deadline first, ties broken by ticket (arrival order).
-** Tickets are unique per dongle, so the order is always deterministic.
-*/
 static int	compare_nodes_heap(t_heap_node *n1, t_heap_node *n2,
 		char *scheduler)
 {

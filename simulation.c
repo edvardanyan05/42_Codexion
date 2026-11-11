@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/31 01:10:33 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/10 22:19:38 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/11 18:43:22 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,10 +25,6 @@ int	is_simulation_ended(t_sim *sim)
 	return (ended);
 }
 
-/*
-** With a single coder there is only one dongle: it can be taken but
-** never paired, so the coder waits until the monitor detects burnout.
-*/
 void	*coder_routine(void *arg)
 {
 	t_coder	*coder;

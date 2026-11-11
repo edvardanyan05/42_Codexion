@@ -6,7 +6,7 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/27 22:29:33 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 21:09:20 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/11 18:43:06 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,9 +40,6 @@ int	parse_args(int argc, char **argv, t_sim *sim)
 	return (0);
 }
 
-/*
-** Accepts only plain digits (no sign, no spaces) fitting in an int.
-*/
 static int	is_valid_number(char *s)
 {
 	int	i;

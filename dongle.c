@@ -6,25 +6,17 @@
 /*   By: edmvarda <edmvarda@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/10/30 21:40:09 by edmvarda          #+#    #+#             */
-/*   Updated: 2026/11/05 21:52:44 by edmvarda         ###   ########.fr       */
+/*   Updated: 2026/11/11 18:41:50 by edmvarda         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "codexion.h"
 
-/*
-** Called with dongle->lock held. The coder may take the dongle only when:
-** nobody owns it, it is first in the queue and its cooldown is over.
-** If only the cooldown is missing, we sleep until it expires
-** (timedwait), otherwise we sleep until someone broadcasts
-** (a release or the end of the simulation).
-*/
 static void	wait_for_dongle(t_coder *coder, t_dongle *dongle)
 {
 	struct timespec	ts;
 
-	while (!is_simulation_ended(coder->sim)
-		&& (dongle->owner_id != 0
+	while (!is_simulation_ended(coder->sim) && (dongle->owner_id != 0
 			|| dongle->heap->nodes[0].coder != coder
 			|| get_time_in_ms() < dongle->cooldown_until))
 	{
@@ -65,11 +57,6 @@ int	take_dongle(t_coder *coder, t_dongle *dongle)
 	return (1);
 }
 
-/*
-** Dongles are always taken in increasing id order (resource hierarchy),
-** which breaks the circular wait condition and prevents deadlocks.
-** Returns 1 when both dongles are held, 0 otherwise (nothing is held).
-*/
 int	take_both_dongles(t_coder *coder)
 {
 	t_dongle	*first;
