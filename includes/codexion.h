@@ -30,7 +30,7 @@ int			print_error(const char *msg);
 // time.c
 long long	get_time_in_ms(void);
 void		ft_usleep(long long duration_ms, t_sim *sim);
-void		ms_to_timespec(long long ms, struct timespec *ts);
+void		timespec_from_now(struct timespec *ts, long us);
 
 // parsing.c
 int			parse_args(int argc, char **argv, t_sim *sim);
@@ -47,12 +47,16 @@ void		cleanup_simulation(t_sim *sim);
 
 // logging.c
 void		print_status(t_sim *sim, int id, const char *status);
+void		print_compile(t_sim *sim, int id);
 
 // dongle.c
-int			take_dongle(t_coder *coder, t_dongle *dongle);
 int			take_both_dongles(t_coder *coder);
-void		free_dongle(t_sim *sim, t_dongle *dongle);
 void		free_both_dongles(t_coder *coder);
+
+// dongle_helpers.c
+int			join_queue(t_coder *coder, t_dongle *dongle);
+int			is_dongle_ready(t_coder *coder, t_dongle *dongle);
+void		release_dongle(t_sim *sim, t_dongle *dongle);
 
 // simulation.c
 void		*coder_routine(void *arg);

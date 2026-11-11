@@ -71,7 +71,7 @@ Each state change is logged as `timestamp_in_ms coder_id message`, where
 | `init.c`, `init_helpers.c` | Allocation and mutex/cond initialization |
 | `simulation.c` | Coder thread routine (compile → debug → refactor) |
 | `monitor.c` | Monitor thread: burnout and completion detection |
-| `dongle.c` | Taking and releasing dongles (queue, cooldown, arbitration) |
+| `dongle.c`, `dongle_helpers.c` | Taking both dongles at once, releasing them (queues, cooldown, arbitration) |
 | `heap.c`, `heap_helpers.c` | Custom binary min-heap (priority queue) |
 | `logging.c` | Serialized output |
 | `time.c`, `utils.c` | Time helpers and small utilities |
@@ -81,21 +81,29 @@ Each state change is logged as `timestamp_in_ms coder_id message`, where
 
 ### Deadlock prevention (Coffman's conditions)
 
-A deadlock requires all four Coffman conditions at once: mutual exclusion,
-hold and wait, no preemption, and **circular wait**. The first three are part
-of the problem itself: a dongle is exclusive, a coder holds one while waiting
-for the other, and dongles cannot be taken away. So we break **circular wait**.
+A deadlock needs all four Coffman conditions at once: mutual exclusion,
+hold and wait, no preemption and circular wait. Mutual exclusion and
+no preemption are part of the problem (a dongle is exclusive and cannot be
+taken away), so the solution breaks the other two:
 
-Every dongle has an id (`1..N`) and each coder always takes the **lower id first**
-(resource hierarchy, `take_both_dongles` in `dongle.c`). Coder `N` sits between
-dongle `N` and dongle `1`, so they request dongle `1` first, just like coder `1`.
-A cycle of coders each waiting on their neighbour therefore cannot form.
+- **No hold and wait.** A coder takes its two dongles **in one step**
+  (`take_both_dongles` in `dongle.c`). It locks both dongle mutexes, joins both
+  waiting queues, and takes the dongles only when it can take **both** at once.
+  A coder never holds one dongle while waiting for the other.
+- **No circular wait.** The two dongle mutexes are always locked
+  **lower id first**, so the mutexes themselves can't deadlock. A coder joins
+  both queues while holding both mutexes, so two neighbours are always queued
+  in the same order on the dongle they share. A cycle in which every coder
+  waits for the next one would need that order to loop back on itself, which
+  is impossible. So the coder first in that order is always first in both its
+  queues, and the simulation always progresses.
 
 ### Starvation prevention and fair arbitration
 
 Each dongle owns a **waiting queue implemented as a binary min-heap**
 (no standard library priority queue). A coder requesting a dongle is pushed
-into its heap, and may only take the dongle when it is the **head of the heap**.
+into its heap, and may only take the dongle when it is the **head of the heap**
+(for both of its dongles).
 A late arrival can never "steal" the dongle from someone who should be served first.
 
 - `fifo`: nodes are ordered by a **ticket**, a per-dongle counter incremented
@@ -112,14 +120,22 @@ guarantees liveness whenever the parameters are feasible.
 
 When a dongle is released, `cooldown_until = now + dongle_cooldown` is stored.
 A dongle is available only if it has no owner, the requester is at the head of
-its queue, **and** `now >= cooldown_until`. If only the cooldown is missing,
-the head coder sleeps with `pthread_cond_timedwait` until exactly `cooldown_until`.
-It does not miss the end of the cooldown, and it does not busy-wait.
+its queue, **and** `now >= cooldown_until`. While waiting, a coder sleeps with
+`pthread_cond_timedwait`: it wakes on a release broadcast, or after at most
+500 µs to re-check the cooldowns. It never misses the end of a cooldown, and it
+doesn't busy-wait.
+
+### Start-up order
+
+Even-numbered coders start `time_to_compile / 2` ms later, so the odd coders join
+the queues first and neighbours alternate. Otherwise every coder would queue
+at once and form a long waiting chain at the start.
 
 ### Single coder
 
-With one coder there is a single dongle (left == right). The coder takes it,
-can never get a second one, and waits until the monitor reports the burnout.
+With one coder there is a single dongle (left == right). The coder takes it
+(`has taken a dongle`), can never get a second one, and waits until the monitor
+reports the burnout.
 
 ### Precise burnout detection
 
@@ -132,15 +148,18 @@ A dedicated **monitor thread** checks every coder about every 0.5 ms.
 ### Clean termination
 
 When the simulation ends, the monitor **broadcasts on every dongle's condition
-variable**, so coders blocked in `pthread_cond_wait` wake up, see the end flag
+variable**, so coders blocked in `pthread_cond_timedwait` wake up, see the end flag
 and exit. Long sleeps (`ft_usleep`) also check the end flag and return early.
 All threads are joined, then every mutex and condition variable is destroyed
 and all memory is freed. Cleanup also handles a partial initialization.
 
 ### Log serialization
 
-Every message goes through `print_status`, which holds `print_lock` for the
-whole `printf`, so two lines can never be interleaved. Once the simulation
+Every message goes through `print_status` or `print_compile`, which hold
+`print_lock` for the whole `printf`, so two lines can never be interleaved.
+`print_compile` prints both `has taken a dongle` lines and `is compiling` under
+**one** hold of `print_lock`. Every `is compiling` line is therefore directly
+preceded by the two `has taken a dongle` lines of the same coder. Once the simulation
 has ended, every message except the final `burned out` is suppressed, so
 nothing is printed after a burnout.
 
@@ -154,15 +173,20 @@ nothing is printed after a burnout.
 | `sim.sim_lock` (`pthread_mutex_t`) | The `simulation_ended` flag, read by every thread |
 | `sim.print_lock` (`pthread_mutex_t`) | Standard output, so log lines never interleave |
 
-### How a coder takes a dongle
+### How a coder takes its dongles
 
-1. Lock `dongle.lock`, get a ticket, push its node into the dongle's heap.
-2. While (the dongle has an owner **or** the coder is not the heap head **or** the
-   cooldown is running) and the simulation is not over, wait on `dongle.cond`.
-   `pthread_cond_wait` atomically releases the mutex while sleeping.
-3. Pop itself from the heap, set `owner_id`, log `has taken a dongle`, unlock.
+1. Lock the lower-id dongle mutex, then the higher-id one.
+2. Join both waiting queues (a heap node with a ticket and a deadline each).
+3. Loop while the simulation is not over. If the coder is first in **both**
+   queues, and both dongles are free and cooled down, go to step 4. Otherwise
+   unlock the second mutex and `pthread_cond_timedwait` on the first dongle
+   (this releases the first mutex while sleeping). Then lock the second mutex
+   again, always in the same order.
+4. Pop itself from both heaps, set both `owner_id`, and unlock both mutexes.
+5. Update `last_compile_time` and `compile_count` under `coder_lock`, then print
+   the two `has taken a dongle` lines and `is compiling` together.
 
-Releasing a dongle locks `dongle.lock`, clears the owner, sets the cooldown and
+Releasing a dongle locks its mutex, clears the owner, sets the cooldown and
 calls `pthread_cond_broadcast` so the waiters re-check their condition.
 
 ### Coder ↔ monitor communication
@@ -174,8 +198,8 @@ calls `pthread_cond_broadcast` so the waiters re-check their condition.
   Every coder loop, every sleep and every dongle wait checks it through
   `is_simulation_ended()`, which takes the same lock. The monitor then
   broadcasts every `dongle.cond` while holding each dongle mutex. A coder
-  checks the flag and starts waiting in one step under the dongle mutex,
-  so the wake-up cannot be lost.
+  checks the flag while holding that mutex, and the 500 µs timeout is a
+  second safety net, so a wake-up can never be lost.
 
 ### Race condition examples prevented
 
@@ -190,8 +214,9 @@ calls `pthread_cond_broadcast` so the waiters re-check their condition.
 ### Lock ordering
 
 Locks are always taken in a consistent order, so the locks themselves cannot deadlock:
+`dongle.lock (lower id) → dongle.lock (higher id) → sim_lock`,
 `coder_lock → sim_lock`, `coder_lock → print_lock → sim_lock`,
-`dongle.lock → print_lock → sim_lock`, `dongle.lock → sim_lock`.
+`print_lock → sim_lock`.
 No thread takes them in the opposite order.
 
 ## Resources
@@ -214,6 +239,9 @@ An AI assistant (Claude) was used for the following:
 - **Fixing those issues:** the ticket-based tie-breaker in the heap, the timed
   wait for the cooldown, waking all dongles at the end, and making init/cleanup
   safe after a partial failure.
+- **Redesigning dongle acquisition** after checking against the evaluation scale:
+  both dongles are now taken in one step (no hold and wait), and the three
+  compile log lines are printed together.
 - **Writing** `main.c`, the `Makefile` and a first draft of this README.
 
 Every change was reviewed, tested and understood before being kept.

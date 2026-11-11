@@ -12,6 +12,7 @@
 
 #include "codexion.h"
 
+static void	*lonely_coder(t_coder *coder);
 static void	compile(t_coder *coder);
 static void	debug_and_refactor(t_coder *coder);
 
@@ -25,18 +26,19 @@ int	is_simulation_ended(t_sim *sim)
 	return (ended);
 }
 
+/*
+** Even coders start half a compile later, so odd coders join the dongle
+** queues first: neighbours alternate instead of all queuing at once.
+*/
 void	*coder_routine(void *arg)
 {
 	t_coder	*coder;
 
 	coder = (t_coder *)arg;
 	if (coder->sim->number_of_coders == 1)
-	{
-		take_dongle(coder, coder->left);
-		while (!is_simulation_ended(coder->sim))
-			usleep(500);
-		return (NULL);
-	}
+		return (lonely_coder(coder));
+	if (coder->coder_id % 2 == 0)
+		ft_usleep(coder->sim->time_to_compile / 2, coder->sim);
 	while (!is_simulation_ended(coder->sim))
 	{
 		if (!take_both_dongles(coder))
@@ -48,13 +50,25 @@ void	*coder_routine(void *arg)
 	return (NULL);
 }
 
+/*
+** With a single coder there is only one dongle: it can be taken but
+** never paired, so the coder waits until the monitor detects burnout.
+*/
+static void	*lonely_coder(t_coder *coder)
+{
+	print_status(coder->sim, coder->coder_id, "has taken a dongle");
+	while (!is_simulation_ended(coder->sim))
+		usleep(500);
+	return (NULL);
+}
+
 static void	compile(t_coder *coder)
 {
 	pthread_mutex_lock(&coder->coder_lock);
 	coder->last_compile_time = get_time_in_ms();
 	coder->compile_count++;
 	pthread_mutex_unlock(&coder->coder_lock);
-	print_status(coder->sim, coder->coder_id, "is compiling");
+	print_compile(coder->sim, coder->coder_id);
 	ft_usleep(coder->sim->time_to_compile, coder->sim);
 }
 

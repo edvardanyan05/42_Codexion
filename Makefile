@@ -12,6 +12,7 @@ SRCS		= main.c \
 			  simulation.c \
 			  monitor.c \
 			  dongle.c \
+			  dongle_helpers.c \
 			  heap.c \
 			  heap_helpers.c \
 			  logging.c \

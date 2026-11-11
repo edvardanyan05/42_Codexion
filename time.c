@@ -33,8 +33,16 @@ void	ft_usleep(long long duration_ms, t_sim *sim)
 	}
 }
 
-void	ms_to_timespec(long long ms, struct timespec *ts)
+/*
+** Fills ts with "now + us microseconds" as an absolute time, the format
+** expected by pthread_cond_timedwait (same clock as gettimeofday).
+*/
+void	timespec_from_now(struct timespec *ts, long us)
 {
-	ts->tv_sec = ms / 1000;
-	ts->tv_nsec = (ms % 1000) * 1000000;
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+	us += tv.tv_usec;
+	ts->tv_sec = tv.tv_sec + us / 1000000;
+	ts->tv_nsec = (us % 1000000) * 1000;
 }

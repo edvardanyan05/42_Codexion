@@ -12,84 +12,65 @@
 
 #include "codexion.h"
 
-static void	wait_for_dongle(t_coder *coder, t_dongle *dongle)
-{
-	struct timespec	ts;
-
-	while (!is_simulation_ended(coder->sim) && (dongle->owner_id != 0
-			|| dongle->heap->nodes[0].coder != coder
-			|| get_time_in_ms() < dongle->cooldown_until))
-	{
-		if (dongle->owner_id == 0 && dongle->heap->nodes[0].coder == coder)
-		{
-			ms_to_timespec(dongle->cooldown_until, &ts);
-			pthread_cond_timedwait(&dongle->cond, &dongle->lock, &ts);
-		}
-		else
-			pthread_cond_wait(&dongle->cond, &dongle->lock);
-	}
-}
-
-int	take_dongle(t_coder *coder, t_dongle *dongle)
-{
-	t_heap_node	node;
-
-	pthread_mutex_lock(&dongle->lock);
-	node.coder = coder;
-	node.ticket = dongle->next_ticket;
-	dongle->next_ticket++;
-	node.deadline = coder->last_compile_time + coder->sim->time_to_burnout;
-	if (!push_heap(dongle->heap, node))
-	{
-		pthread_mutex_unlock(&dongle->lock);
-		return (0);
-	}
-	wait_for_dongle(coder, dongle);
-	if (is_simulation_ended(coder->sim))
-	{
-		pthread_mutex_unlock(&dongle->lock);
-		return (0);
-	}
-	pop_heap(dongle->heap);
-	dongle->owner_id = coder->coder_id;
-	print_status(coder->sim, coder->coder_id, "has taken a dongle");
-	pthread_mutex_unlock(&dongle->lock);
-	return (1);
-}
+static void	order_dongles(t_coder *coder, t_dongle **first, t_dongle **second);
+static int	wait_for_both(t_coder *coder, t_dongle *first, t_dongle *second);
+static void	grab_both(t_coder *coder, t_dongle *first, t_dongle *second);
 
 int	take_both_dongles(t_coder *coder)
 {
 	t_dongle	*first;
 	t_dongle	*second;
+	int			ok;
 
-	first = coder->left;
-	second = coder->right;
-	if (first->dongle_id > second->dongle_id)
-	{
-		first = coder->right;
-		second = coder->left;
-	}
-	if (!take_dongle(coder, first))
-		return (0);
-	if (!take_dongle(coder, second))
-	{
-		free_dongle(coder->sim, first);
-		return (0);
-	}
-	return (1);
-}
-
-void	free_dongle(t_sim *sim, t_dongle *dongle)
-{
-	pthread_mutex_lock(&dongle->lock);
-	dongle->owner_id = 0;
-	dongle->cooldown_until = get_time_in_ms() + sim->dongle_cooldown;
-	pthread_cond_broadcast(&dongle->cond);
-	pthread_mutex_unlock(&dongle->lock);
+	order_dongles(coder, &first, &second);
+	pthread_mutex_lock(&first->lock);
+	pthread_mutex_lock(&second->lock);
+	ok = (join_queue(coder, first) && join_queue(coder, second)
+			&& wait_for_both(coder, first, second));
+	if (ok)
+		grab_both(coder, first, second);
+	pthread_mutex_unlock(&second->lock);
+	pthread_mutex_unlock(&first->lock);
+	return (ok);
 }
 
 void	free_both_dongles(t_coder *coder)
 {
-	free_dongle(coder->sim, coder->left);
-	free_dongle(coder->sim, coder->right);
+	release_dongle(coder->sim, coder->left);
+	release_dongle(coder->sim, coder->right);
+}
+
+static void	order_dongles(t_coder *coder, t_dongle **first, t_dongle **second)
+{
+	*first = coder->left;
+	*second = coder->right;
+	if ((*first)->dongle_id > (*second)->dongle_id)
+	{
+		*first = coder->right;
+		*second = coder->left;
+	}
+}
+
+static int	wait_for_both(t_coder *coder, t_dongle *first, t_dongle *second)
+{
+	struct timespec	ts;
+
+	while (!is_simulation_ended(coder->sim))
+	{
+		if (is_dongle_ready(coder, first) && is_dongle_ready(coder, second))
+			return (1);
+		pthread_mutex_unlock(&second->lock);
+		timespec_from_now(&ts, 500);
+		pthread_cond_timedwait(&first->cond, &first->lock, &ts);
+		pthread_mutex_lock(&second->lock);
+	}
+	return (0);
+}
+
+static void	grab_both(t_coder *coder, t_dongle *first, t_dongle *second)
+{
+	pop_heap(first->heap);
+	pop_heap(second->heap);
+	first->owner_id = coder->coder_id;
+	second->owner_id = coder->coder_id;
 }
